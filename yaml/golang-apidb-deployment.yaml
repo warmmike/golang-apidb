@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: golang-apidb
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: golang-apidb
+  template:
+    metadata:
+      labels:
+        app: golang-apidb
+    spec:
+      containers:
+        - name: golang-apidb
+          image: 'kube-registry.kube-system.svc.cluster.local:31000/golang-apidb'
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8081
