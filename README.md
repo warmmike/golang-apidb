@@ -19,7 +19,8 @@ mike@Michaels-MacBook-Pro golang-apidb % curl -X GET 'http://localhost:8081/movi
 By movie name
 ```
 mike@Michaels-MacBook-Pro golang-apidb % curl -X GET 'http://localhost:8081/movies/?title=Popeye'
-[{"title":"Popeye","year":1980,"cast":["Robin Williams","Shelley Duvall","Paul Dooley"],"genres":["Musical","Comedy"],"href":"Popeye_(film)","extract":"Popeye is a 1980 American musical comedy film directed by Robert Altman and produced by Paramount Pictures and Walt Disney Productions. It is based on E. C. Segar's Popeye comics character. The script was written by Jules Feiffer, and stars Robin Williams as Popeye the Sailor Man and Shelley Duvall as Olive Oyl. Its story follows Popeye's adventures as he arrives in the town of Sweethaven.","thumbnail":"https://upload.wikimedia.org/wikipedia/en/8/88/Popeyemovieposter.jpg","thumbnail_width":258,"thumbnail_height":391}]```
+[{"title":"Popeye","year":1980,"cast":["Robin Williams","Shelley Duvall","Paul Dooley"],"genres":["Musical","Comedy"],"href":"Popeye_(film)","extract":"Popeye is a 1980 American musical comedy film directed by Robert Altman and produced by Paramount Pictures and Walt Disney Productions. It is based on E. C. Segar's Popeye comics character. The script was written by Jules Feiffer, and stars Robin Williams as Popeye the Sailor Man and Shelley Duvall as Olive Oyl. Its story follows Popeye's adventures as he arrives in the town of Sweethaven.","thumbnail":"https://upload.wikimedia.org/wikipedia/en/8/88/Popeyemovieposter.jpg","thumbnail_width":258,"thumbnail_height":391}]
+```
 
 By cast member
 ```
