@@ -20,8 +20,7 @@ const (
 	port = 5432
 	//host = "localhost"
 	//port = 51591
-	user = "postgres"
-	//Use kube secret environment variable
+	user   = "postgres"
 	dbname = "postgres"
 	table  = "movies"
 )

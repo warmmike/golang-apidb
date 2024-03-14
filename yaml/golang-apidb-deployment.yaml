@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: golang-apidb
 spec:
-  replicas: 1
+  replicas: 3
   selector:
     matchLabels:
       app: golang-apidb
@@ -16,5 +16,11 @@ spec:
         - name: golang-apidb
           image: 'kube-registry.kube-system.svc.cluster.local:31000/golang-apidb'
           imagePullPolicy: Always
+          env:
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: golang-apidb-secret-config
+                  key: password
           ports:
             - containerPort: 8081

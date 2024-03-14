@@ -5,8 +5,9 @@ metadata:
   labels:
     app: golang-apidb
 spec:
-  type: NodePort
+  type: LoadBalancer
   ports:
     - port: 8081
+      targetPort: 8081
   selector:
     app: golang-apidb
