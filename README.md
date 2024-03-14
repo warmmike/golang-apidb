@@ -14,7 +14,8 @@ Golang Project API DB
 By year
 ```
 mike@Michaels-MacBook-Pro golang-apidb % curl -X GET 'http://localhost:8081/movies/?year=1990'
-[{"title":"Arachnophobia","year":1990,"cast":["Jeff Daniels","John Goodman","Harley Jane Kozak","Julian Sands"],"genres":["Thriller","Comedy","Horror"],"href":"Arachnophobia_(film)","extract":"Arachnophobia is a 1990 American horror comedy film directed by Frank Marshall in his directorial debut from a screenplay by Don Jakoby and Wesley Strick. Starring Jeff Daniels and John Goodman, the film follows a small California town that becomes invaded by an aggressive and dangerous spider species. Its title refers to the fear of spiders.","thumbnail":"https://upload.wikimedia.org/wikipedia/en/a/a0/Arachnophobia_%28film%29_POSTER.jpg","thumbnail_width":259,"thumbnail_height":383}]```
+[{"title":"Arachnophobia","year":1990,"cast":["Jeff Daniels","John Goodman","Harley Jane Kozak","Julian Sands"],"genres":["Thriller","Comedy","Horror"],"href":"Arachnophobia_(film)","extract":"Arachnophobia is a 1990 American horror comedy film directed by Frank Marshall in his directorial debut from a screenplay by Don Jakoby and Wesley Strick. Starring Jeff Daniels and John Goodman, the film follows a small California town that becomes invaded by an aggressive and dangerous spider species. Its title refers to the fear of spiders.","thumbnail":"https://upload.wikimedia.org/wikipedia/en/a/a0/Arachnophobia_%28film%29_POSTER.jpg","thumbnail_width":259,"thumbnail_height":383}]
+```
 
 By movie name
 ```
