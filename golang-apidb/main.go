@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"regexp"
 	"strings"
 
@@ -17,14 +18,15 @@ import (
 const (
 	host = "postgres.postgres"
 	port = 5432
-	//host     = "localhost"
-	//port     = 51591
-	user     = "postgres"
+	//host = "localhost"
+	//port = 51591
+	user = "postgres"
 	//Use kube secret environment variable
-	password = <PASSWORD>
-	dbname   = "postgres"
-	table    = "movies"
+	dbname = "postgres"
+	table  = "movies"
 )
+
+var password = os.Getenv("DB_PASSWORD")
 
 // Regex to validate API URL
 var (
@@ -78,12 +80,14 @@ func CloseConnection(db *sql.DB) {
 // Create movies table if not exist
 func CreateTable(db *sql.DB) {
 	var exists bool
-	if err := db.QueryRow("SELECT EXISTS (SELECT FROM pg_tables WHERE  schemaname = 'public' AND tablename = '" + table + "' );").Scan(&exists); err != nil {
+	queryStmt := `SELECT EXISTS (SELECT FROM pg_tables WHERE  schemaname = 'public' AND tablename = $1);`
+	if err := db.QueryRow(queryStmt, table).Scan(&exists); err != nil {
 		log.Println("failed to execute query", err)
 		return
 	}
 	if !exists {
-		results, err := db.Query(`CREATE TABLE " + table + " (title varchar,year integer,"cast" varchar[],genres varchar[],href varchar,extract TEXT,thumbnail varchar,thumbnail_width integer,thumbnail_height integer);`)
+		queryStmt := `CREATE TABLE ` + table + ` (title varchar,year integer,"cast" varchar[],genres varchar[],href varchar,extract TEXT,thumbnail varchar,thumbnail_width integer,thumbnail_height integer);`
+		results, err := db.Query(queryStmt)
 		if err != nil {
 			log.Println("failed to execute query", err)
 			return
@@ -149,16 +153,19 @@ func (h *dataHandler) Get(w http.ResponseWriter, r *http.Request) {
 				count := 0
 				var val string
 				for k, v := range r.URL.Query() {
-					count += 1
 					val = strings.Join(v, " ")
 					switch {
 					case k == "title":
+						count += 1
 						queryStmt += ` WHERE title = $1;`
 					case k == "year":
+						count += 1
 						queryStmt += ` WHERE year = $1;`
 					case k == "cast":
+						count += 1
 						queryStmt += ` WHERE $1=ANY("cast");`
 					case k == "genre":
+						count += 1
 						queryStmt += ` WHERE $1=ANY(genres);`
 					}
 					if count > 0 {
@@ -224,6 +231,10 @@ func handleRequests(DB *sql.DB) {
 }
 
 func main() {
+	_, exists := os.LookupEnv("DB_PASSWORD")
+	if !exists {
+		panic("DB_PASSWORD not set")
+	}
 	DB := Connect()
 	CreateTable(DB)
 	handleRequests(DB)
