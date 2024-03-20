@@ -7,6 +7,7 @@ import pprint
 
 AWS_ACCESS_KEY_ID = None
 AWS_SECRET_ACCESS_KEY = None
+DB_PASSWORD = None
 
 s3 = boto3.client(
     's3',
@@ -68,7 +69,7 @@ def put_db_record(json_body):
     conn = psycopg2.connect(
         database="postgres",
         user='postgres',
-        password='postgres1999',
+        password=DB_PASSWORD,
         host='localhost',
         port='5432'
     )
@@ -80,13 +81,13 @@ def put_db_record(json_body):
 
 # Main Function
 if __name__ == "__main__":
-    if not ("AWS_ACCESS_KEY_ID" in os.environ) or not ("AWS_SECRET_ACCESS_KEY" in os.environ):
-        print("Set AWS_ACCESSKEY_ID and AWS_SECRET_ACCESS_KEY")
+    if not ("AWS_ACCESS_KEY_ID" in os.environ) or not ("AWS_SECRET_ACCESS_KEY" in os.environ) or not ("DB_PASSWORD" in os.environ):
+        print("Set AWS_ACCESSKEY_ID and AWS_SECRET_ACCESS_KEY and DB_PASSWORD")
         quit()
     else:
         AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
         AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY") 
-
+        DB_PASSWORD = os.getenv("DB_PASSWORD")
     #get_objectmethods(s3)
     #get_objectmethods(sqs)
     queue_url = 'http://sqs.eu-west-2.localhost.localstack.cloud:4566/000000000000/moviedata'
