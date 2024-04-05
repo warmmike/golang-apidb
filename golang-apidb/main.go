@@ -9,17 +9,18 @@ import (
 	"net/http"
 	"os"
 	"regexp"
-	"strings"
 
 	"github.com/lib/pq"
 	_ "github.com/lib/pq"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 )
 
 const (
 	host = "postgres.postgres"
 	port = 5432
-	//host = "localhost"
-	//port = 51591
+	//host   = "localhost"
+	//port   = 63711
 	user   = "postgres"
 	dbname = "postgres"
 	table  = "movies"
@@ -37,42 +38,38 @@ var listPostMatches = []*regexp.Regexp{createDataRe}
 
 // Pass DB object via handlers
 type dataHandler struct {
-	DB *sql.DB
+	DB *gorm.DB
 }
 
 // Agreed data format: https://github.com/prust/wikipedia-movie-data
 type Movie struct {
-	Title            string   `json:"title,omitempty"`
-	Year             int      `json:"year,omitempty"`
-	Cast             []string `json:"cast,omitempty"`
-	Genres           []string `json:"genres,omitempty"`
-	Href             string   `json:"href,omitempty"`
-	Extract          string   `json:"extract,omitempty"`
-	Thumbnail        string   `json:"thumbnail,omitempty"`
-	Thumbnail_width  int      `json:"thumbnail_width,omitempty"`
-	Thumbnail_height int      `json:"thumbnail_height,omitempty"`
+	Title            string         `json:"title,omitempty"`
+	Year             int            `json:"year,omitempty"`
+	Cast             pq.StringArray `json:"cast,omitempty" gorm:"type:string[]"`
+	Genres           pq.StringArray `json:"genres,omitempty" gorm:"type:string[]"`
+	Href             string         `json:"href,omitempty"`
+	Extract          string         `json:"extract,omitempty"`
+	Thumbnail        string         `json:"thumbnail,omitempty"`
+	Thumbnail_width  int            `json:"thumbnail_width,omitempty"`
+	Thumbnail_height int            `json:"thumbnail_height,omitempty"`
 }
 
 // Connect to DB
-func Connect() *sql.DB {
-	connInfo := fmt.Sprintf("host=%s port=%d user=%s "+
+func Connect() *gorm.DB {
+	dsn := fmt.Sprintf("host=%s port=%d user=%s "+
 		"password=%s dbname=%s sslmode=disable",
 		host, port, user, password, dbname)
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 
-	db, err := sql.Open("postgres", connInfo)
 	if err != nil {
 		log.Fatal(err)
-	}
-	err = db.Ping()
-	if err != nil {
-		panic(err)
 	}
 	log.Println("Successfully connected to db at " + host)
 	return db
 }
 
 // Close DB connection
-func CloseConnection(db *sql.DB) {
+func CloseConnection(db *gorm.DB) {
 	defer db.Close()
 }
 
@@ -117,8 +114,9 @@ func (h *dataHandler) Create(w http.ResponseWriter, r *http.Request) {
 			}
 			var movie Movie
 			json.Unmarshal(body, &movie)
-			queryStmt := `INSERT INTO ` + table + ` (title,year,"cast",genres,href,extract,thumbnail,thumbnail_width,thumbnail_height) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING title;`
-			err = h.DB.QueryRow(queryStmt, &movie.Title, &movie.Year, pq.Array(&movie.Cast), pq.Array(&movie.Genres), &movie.Href, &movie.Extract, &movie.Thumbnail, &movie.Thumbnail_width, &movie.Thumbnail_height).Scan(&movie.Title)
+			if result := h.DB.Create(&movie); result.Error != nil {
+				log.Println(result.Error)
+			}
 			if err != nil {
 				log.Println("failed to execute query", err)
 				w.WriteHeader(500)
@@ -143,53 +141,35 @@ func (h *dataHandler) Get(w http.ResponseWriter, r *http.Request) {
 
 		switch {
 		case match == getDataRe:
-			var results *sql.Rows
-			var err error
-			queryStmt := `SELECT * FROM ` + table
+			//var err error
+			var movies []Movie
 			if len(r.URL.Query()) == 0 {
-				results, err = h.DB.Query(queryStmt)
+				if result := h.DB.Find(&movies); result.Error != nil {
+					fmt.Println(result.Error)
+				}
 			} else {
-				count := 0
-				var val string
-				for k, v := range r.URL.Query() {
-					val = strings.Join(v, " ")
-					switch {
-					case k == "title":
-						count += 1
-						queryStmt += ` WHERE title = $1;`
-					case k == "year":
-						count += 1
-						queryStmt += ` WHERE year = $1;`
-					case k == "cast":
-						count += 1
-						queryStmt += ` WHERE $1=ANY("cast");`
-					case k == "genre":
-						count += 1
-						queryStmt += ` WHERE $1=ANY(genres);`
-					}
-					if count > 0 {
-						break
+				for _, key := range []string{"title", "year", "cast", "genre"} {
+					val, exists := r.URL.Query()[key]
+					if exists {
+						switch true {
+						case (key == "title" || key == "year"):
+							if result := h.DB.Where(key+" = ?", val).Find(&movies); result.Error != nil {
+								log.Println("failed to execute query", result.Error)
+								notFound(w, r)
+								return
+							}
+						case (key == "cast" || key == "genre"):
+							if key == "genre" {
+								key = "genres"
+							}
+							if result := h.DB.Where("?=ANY(\""+key+"\")", val).Find(&movies); result.Error != nil {
+								log.Println("failed to execute query", result.Error)
+								notFound(w, r)
+								return
+							}
+						}
 					}
 				}
-				results, err = h.DB.Query(queryStmt, val)
-			}
-			if err != nil {
-				log.Println("failed to execute query", err)
-				w.WriteHeader(500)
-				return
-			}
-
-			var movies = make([]Movie, 0)
-			for results.Next() {
-				var movie Movie
-				err = results.Scan(&movie.Title, &movie.Year, pq.Array(&movie.Cast), pq.Array(&movie.Genres), &movie.Href, &movie.Extract, &movie.Thumbnail, &movie.Thumbnail_width, &movie.Thumbnail_height)
-				if err != nil {
-					log.Println("failed to scan", err)
-					w.WriteHeader(500)
-					return
-				}
-
-				movies = append(movies, movie)
 			}
 
 			w.Header().Add("Content-Type", "application/json")
@@ -223,7 +203,7 @@ func notFound(w http.ResponseWriter, r *http.Request) {
 }
 
 // HTTP request handler
-func handleRequests(DB *sql.DB) {
+func handleRequests(DB *gorm.DB) {
 	mux := http.NewServeMux()
 	mux.Handle("/", &dataHandler{DB})
 	log.Fatal(http.ListenAndServe(":8081", mux))
@@ -235,7 +215,7 @@ func main() {
 		panic("DB_PASSWORD not set")
 	}
 	DB := Connect()
-	CreateTable(DB)
+	//CreateTable(DB)
 	handleRequests(DB)
 	CloseConnection(DB)
 }
