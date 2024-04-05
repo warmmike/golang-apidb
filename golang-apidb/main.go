@@ -68,11 +68,6 @@ func Connect() *gorm.DB {
 	return db
 }
 
-// Close DB connection
-func CloseConnection(db *gorm.DB) {
-	defer db.Close()
-}
-
 // Create movies table if not exist
 func CreateTable(db *sql.DB) {
 	var exists bool
@@ -217,5 +212,4 @@ func main() {
 	DB := Connect()
 	//CreateTable(DB)
 	handleRequests(DB)
-	CloseConnection(DB)
 }
