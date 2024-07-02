@@ -5,10 +5,12 @@ from diagrams.aws.storage import S3
 from diagrams.aws.integration import Eventbridge,SQS
 from diagrams.aws.compute import EKS
 from diagrams.aws.network import APIGateway
+from diagrams.aws.network import ELB
 from diagrams.aws.general import Users
 
 with Diagram("Golang Project API DB", show=True):
     gateway = APIGateway("API Gateway")
+    lb = ELB("Application Load Balancer")
 
     EKS_cluster = EKS("Golang API\non EKS Cluster")
     aurora_db = Aurora("Amazon Aurora Postgres DB")
@@ -26,4 +28,4 @@ with Diagram("Golang Project API DB", show=True):
     sqs >> lambda_function
     lambda_function >> aurora_db
 
-    usr >> gateway >> EKS_cluster >> aurora_db
+    usr >> gateway >> lb >> EKS_cluster >> aurora_db
